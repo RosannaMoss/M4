@@ -1,6 +1,6 @@
 import React from "react";
 import ChatMessage from "./ChatMessage";
-import styles from "./ChatBox.css";
+import styles from "./ChatBox.module.css";
 
 const ChatBox = () => {
   const messages = [

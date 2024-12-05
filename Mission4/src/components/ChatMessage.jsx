@@ -1,11 +1,13 @@
 import React from "react";
-import styles from "./ChatMessage.css";
+import styles from "./ChatMessage.module.css";
 
 const ChatMessage = ({ message, sender }) => {
   const isUser = sender === "user";
   return (
-    <div className={`chat-message ${isUser ? "user-message" : "bot-message"}`}>
-      {message}
+    <div className={isUser ? styles.userWrapper : styles.botWrapper}>
+      <div className={isUser ? styles.userMessage : styles.botMessage}>
+        {message}
+      </div>
     </div>
   );
 };

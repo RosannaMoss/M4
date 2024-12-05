@@ -1,33 +1,41 @@
 .header {
-  background-color: #0078d4;
-  color: white;
-  padding: 10px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 10px 20px; /* Reduces padding for a smaller appearance */
+  background-color: white; /* Keeps the professional blue color */
+  color: white;
+  font-family: Arial, sans-serif; /* Ensures a clean, professional font */
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); /* Adds a subtle shadow for depth */
 }
 
 .logo {
-  font-size: 1.5rem;
+  font-size: 1.25rem; /* Makes the logo smaller but still noticeable */
   font-weight: bold;
 }
 
 .nav {
   display: flex;
-  gap: 10px;
+  gap: 15px; /* Adds spacing between navigation items */
 }
 
 .navButton {
+  color: #090909;
+  padding: 0.7em 1.7em;
+  font-size: 18px;
+  color: black;
+  border-radius: 0.5em;
   background: white;
-  border: none;
-  padding: 5px 10px;
-  color: #0078d4;
-  border-radius: 5px;
   cursor: pointer;
-  font-size: 1rem;
+  border: 1px solid #0078d4;
+  transition: all 0.3s;
+  box-shadow: 6px 6px 12px #c2d0db, -6px -6px 12px white;
 }
 
 .navButton:hover {
-  background: #005bb5;
-  color: white;
+  box-shadow: 10px 10px 10px #c2d0db, -10px -10px 10px white;
 }
+
+/* .navButton:active {
+  box-shadow: 4px 4px 12px #c5c5c5, -4px -4px 12px #ffffff;
+} */
