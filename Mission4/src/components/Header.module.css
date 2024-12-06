@@ -1,41 +1,88 @@
 .header {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   padding: 10px 20px; /* Reduces padding for a smaller appearance */
-  background-color: white; /* Keeps the professional blue color */
-  color: white;
+  background-color: #f4f4f9; /* Keeps the professional blue color */
+  color: #0078d4;
   font-family: Arial, sans-serif; /* Ensures a clean, professional font */
-  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); /* Adds a subtle shadow for depth */
-}
-
-.logo {
-  font-size: 1.25rem; /* Makes the logo smaller but still noticeable */
-  font-weight: bold;
 }
 
 .nav {
   display: flex;
   gap: 15px; /* Adds spacing between navigation items */
+  justify-content: center;
+  align-items: center;
 }
-
-.navButton {
-  color: #090909;
-  padding: 0.7em 1.7em;
-  font-size: 18px;
-  color: black;
-  border-radius: 0.5em;
-  background: white;
+/* 
+.liveChatLogo {
+  font-family: inherit;
+  font-size: 20px;
+  background: royalblue;
+  color: white;
+  padding: 0.7em 1em;
+  padding-left: 0.9em;
+  display: flex;
+  align-items: center;
+  border: none;
+  border-radius: 16px;
+  overflow: hidden;
+  transition: all 0.2s;
   cursor: pointer;
-  border: 1px solid #0078d4;
-  transition: all 0.3s;
-  box-shadow: 6px 6px 12px #c2d0db, -6px -6px 12px white;
-}
-
-.navButton:hover {
-  box-shadow: 10px 10px 10px #c2d0db, -10px -10px 10px white;
-}
-
-/* .navButton:active {
-  box-shadow: 4px 4px 12px #c5c5c5, -4px -4px 12px #ffffff;
 } */
+
+.headerButton {
+  font-family: inherit;
+  font-size: 20px;
+  background: royalblue;
+  color: white;
+  padding: 0.7em 1em;
+  padding-left: 0.9em;
+  display: flex;
+  align-items: center;
+  border: none;
+  border-radius: 16px;
+  overflow: hidden;
+  transition: all 0.2s;
+  cursor: pointer;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.headerButton span {
+  display: block;
+  margin-left: 0.3em;
+  transition: all 0.3s ease-in-out;
+}
+
+.headerButton svg {
+  display: block;
+  transform-origin: center center;
+  transition: transform 0.3s ease-in-out;
+}
+
+.headerButton:hover .svgWrapper {
+  animation: fly-1 0.6s ease-in-out infinite alternate;
+}
+
+.headerButton:hover svg {
+  transform: translateX(1.2em) rotate(45deg) scale(1.1);
+}
+
+.headerButton:hover span {
+  transform: translateX(5em);
+}
+
+.headerButton:active {
+  transform: scale(0.95);
+}
+
+@keyframes fly-1 {
+  from {
+    transform: translateY(0.1em);
+  }
+
+  to {
+    transform: translateY(-0.1em);
+  }
+}
