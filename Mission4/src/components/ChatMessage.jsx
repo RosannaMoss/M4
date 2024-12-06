@@ -2,12 +2,18 @@ import React from "react";
 import styles from "./ChatMessage.module.css";
 
 const ChatMessage = ({ message, sender }) => {
-  const isUser = sender === "user";
+  if (typeof message !== "string") {
+    console.error("Invalid message format. Expected a string:", message);
+    return null; // Skip rendering invalid messages
+  }
+
   return (
-    <div className={isUser ? styles.userWrapper : styles.botWrapper}>
-      <div className={isUser ? styles.userMessage : styles.botMessage}>
-        {message}
-      </div>
+    <div
+      className={`${styles.message} ${
+        sender === "bot" ? styles.bot : styles.user
+      }`}
+    >
+      {message}
     </div>
   );
 };

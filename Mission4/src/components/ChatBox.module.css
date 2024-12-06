@@ -14,7 +14,6 @@
   flex-direction: column; /* Keeps messages stacked at the top */
   gap: 10px;
   padding: 15px;
-  background-color: #ffffff;
   border: 1px solid #ddd;
   border-radius: 10px;
   width: 60%; /* Set the width to 60% of the screen */
@@ -22,6 +21,8 @@
   height: 70vh; /* Allocates 70% of the screen height to the chat box */
   overflow-y: auto; /* Enables scrolling if messages exceed available height */
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); /* Optional: Adds a slight shadow for better visibility */
+  background-color: var(--background-color, #ffffff);
+  color: var(--text-color, #000);
 }
 
 .chatInputContainer {
@@ -63,4 +64,10 @@ img {
 
 .chatSendButton:hover {
   background-color: #005bb5;
+}
+
+/* Dark mode styles */
+.darkMode .chatBox {
+  --background-color: #1d1f2c;
+  --text-color: #c4c9d1;
 }

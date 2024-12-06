@@ -1,16 +1,16 @@
-.userWrapper {
+.message {
   display: flex;
   justify-content: flex-end;
   margin: 5px 0;
 }
-
+/* 
 .botWrapper {
   display: flex;
   justify-content: flex-start;
   margin: 5px 0;
-}
+} */
 
-.userMessage {
+.user {
   display: inline-block;
   padding: 10px 15px;
   background-color: #0078d4;
@@ -21,7 +21,7 @@
   word-wrap: break-word;
 }
 
-.botMessage {
+.bot {
   display: inline-block;
   padding: 10px 15px;
   background-color: #f1f1f1;
