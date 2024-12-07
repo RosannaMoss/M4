@@ -32,18 +32,21 @@ const insuranceProducts = [
 ];
 
 // Helper: Generate AI Response
+// Helper: Generate AI Response
 async function generateAIResponse(prompt) {
   try {
-    const response = await model.predict({
-      prompt,
+    // Corrected payload structure
+    const response = await model.generateContent({
+      text: prompt, // Use 'text' instead of 'prompt' if required
       temperature: 0.7,
+      candidateCount: 1, // Specify number of output candidates
       maxOutputTokens: 200,
     });
 
     // Log the raw response for debugging
     console.log("AI API Response:", response);
 
-    const output = response.data?.candidates?.[0]?.output;
+    const output = response?.candidates?.[0]?.content; // Adjust field names as per SDK
     if (!output) {
       console.error("No output in AI response:", response);
       return "Sorry, I couldn't generate a response.";

@@ -2,8 +2,7 @@ import React, { useState } from "react";
 import ChatMessage from "./ChatMessage";
 import styles from "./ChatBox.module.css";
 
-const ChatBox = () => {
-  // Initialize messages with Tina's introductory message
+const ChatBox = ({ isDarkMode }) => {
   const [messages, setMessages] = useState([
     {
       id: 1,
@@ -14,7 +13,6 @@ const ChatBox = () => {
   const [userInput, setUserInput] = useState("");
 
   const sendMessage = async (message) => {
-    // Append user message to chat
     const newMessages = [
       ...messages,
       { id: messages.length + 1, text: message, sender: "user" },
@@ -27,13 +25,12 @@ const ChatBox = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ userMessage: message }), // Send only the user's message
+        body: JSON.stringify({ userMessage: message }),
       });
 
       const text = await response.text();
       const json = JSON.parse(text);
 
-      // Add Tina's response to the chat
       setMessages((prevMessages) => [
         ...prevMessages,
         { id: prevMessages.length + 1, text: json.botResponse, sender: "bot" },
@@ -53,13 +50,17 @@ const ChatBox = () => {
 
   const handleSendClick = () => {
     if (userInput.trim()) {
-      sendMessage(userInput); // Pass only the user input
-      setUserInput(""); // Clear the input box after sending
+      sendMessage(userInput);
+      setUserInput("");
     }
   };
 
   return (
-    <div className={styles.chatContainer}>
+    <div
+      className={`${styles.chatContainer} ${
+        isDarkMode ? styles.darkMode : styles.lightMode
+      }`}
+    >
       <div className={styles.chatBox}>
         {messages.map((msg) => (
           <ChatMessage key={msg.id} message={msg.text} sender={msg.sender} />
@@ -71,7 +72,7 @@ const ChatBox = () => {
           className={styles.chatInput}
           placeholder="Type a message..."
           value={userInput}
-          onChange={(e) => setUserInput(e.target.value)} // Update userInput state
+          onChange={(e) => setUserInput(e.target.value)}
         />
         <button className={styles.chatSendButton} onClick={handleSendClick}>
           Send

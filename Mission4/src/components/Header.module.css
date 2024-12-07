@@ -5,6 +5,8 @@
   padding: 10px 20px; /* Reduces padding for a smaller appearance */
   background-color: var(--background-color, #f4f4f9);
   color: var(--text-color, #0078d4);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+
   font-family: Arial, sans-serif; /* Ensures a clean, professional font */
 }
 
@@ -72,10 +74,14 @@
 }
 
 /* dark mode button*/
-
-.darkMode .header {
-  --background-color: #1d1f2c;
-  --text-color: #c4c9d1;
+.dark {
+  --background-color: #1e1e1e;
+  --text-color: #ffffff;
+  --button-bg: #4caf50;
+  --button-color: #000000;
+  --button-hover-bg: #388e3c;
+  background-color: var(--background-color);
+  color: var(--text-color);
 }
 
 .themeSwitch {

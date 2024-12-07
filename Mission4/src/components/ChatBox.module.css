@@ -1,42 +1,51 @@
+/* Base container */
 .chatContainer {
   display: flex;
   flex-direction: column;
-  align-items: center; /* Centers the entire container horizontally */
-  justify-content: center; /* Centers the entire container vertically */
-  height: 100vh; /* Full viewport height */
-  background-color: #f4f4f9; /* Subtle background color */
-  padding: 0; /* Removes unnecessary padding */
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background-color: var(--background-color, #f4f4f9); /* Default light mode */
+  color: var(--text-color, #000000); /* Default text color */
+  padding: 0;
   margin-top: -50px;
+  transition: background-color 0.3s ease, color 0.3s ease; /* Smooth transitions */
 }
 
+/* ChatBox styles */
 .chatBox {
   display: flex;
-  flex-direction: column; /* Keeps messages stacked at the top */
+  flex-direction: column;
   gap: 10px;
   padding: 15px;
   border: 1px solid #ddd;
   border-radius: 10px;
-  width: 60%; /* Set the width to 60% of the screen */
-  max-width: 800px; /* Prevents the box from becoming too wide */
-  height: 70vh; /* Allocates 70% of the screen height to the chat box */
-  overflow-y: auto; /* Enables scrolling if messages exceed available height */
-  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); /* Optional: Adds a slight shadow for better visibility */
-  background-color: var(--background-color, #ffffff);
+  width: 60%;
+  max-width: 800px;
+  height: 70vh;
+  overflow-y: auto;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+  background-color: var(
+    --chat-background-color,
+    #ffffff
+  ); /* Matches light mode */
   color: var(--text-color, #000);
 }
 
+/* Input container */
 .chatInputContainer {
   display: flex;
-  align-items: center; /* Centers items within the input container */
+  align-items: center;
   gap: 10px;
   padding: 10px 15px;
-  background: #f9f9f9;
+  background: var(--chat-background-color, #f9f9f9); /* Matches light mode */
   border-top: 1px solid #ddd;
-  width: 60%; /* Matches the width of the chat box */
-  max-width: 800px; /* Prevents the input container from becoming too wide */
+  width: 60%;
+  max-width: 800px;
   border: 1px solid #ddd;
   border-radius: 4px;
   margin-top: 10px;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .chatInput {
@@ -45,11 +54,6 @@
   border: 1px solid #ddd;
   border-radius: 25px;
   font-size: 1rem;
-}
-
-img {
-  height: 40px;
-  margin-left: 10px;
 }
 
 .chatSendButton {
@@ -66,8 +70,36 @@ img {
   background-color: #005bb5;
 }
 
-/* Dark mode styles */
+/* Dark Mode Styles */
+.darkMode {
+  --background-color: #1e1e1e; /* Dark mode container background */
+  --text-color: #c4c9d1; /* Text color in dark mode */
+  --chat-background-color: #2a2a40; /* Shared background for chatBox and chatInputContainer */
+}
+
+.darkMode .chatContainer {
+  background-color: var(
+    --background-color
+  ); /* Applies the dark background color */
+  color: var(--text-color); /* Applies the dark text color */
+}
+
 .darkMode .chatBox {
-  --background-color: #1d1f2c;
-  --text-color: #c4c9d1;
+  background-color: var(
+    --chat-background-color
+  ); /* Matches chatInputContainer */
+  color: var(--text-color);
+}
+
+.darkMode .chatInputContainer {
+  background-color: var(--chat-background-color); /* Matches chatBox */
+  border-color: #444;
+}
+
+.darkMode .chatSendButton {
+  background-color: #4caf50;
+}
+
+.darkMode .chatSendButton:hover {
+  background-color: #388e3c;
 }
