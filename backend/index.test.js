@@ -1,112 +1,244 @@
 const request = require("supertest");
 const express = require("express");
 const bodyParser = require("body-parser");
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 const cors = require("cors");
 
-// Import functions
-const { getNextQuestion } = require("./index");
-
-// Mocking AI Response Generator
-jest.mock("./index", () => ({
-  generateAIResponse: jest.fn((prompt) => `Mocked response for: ${prompt}`),
-  getNextQuestion: jest.requireActual("./path-to-your-code").getNextQuestion,
-}));
-
-// Setup Express App
 const app = express();
+const PORT = 3001;
+
 app.use(cors());
 app.use(bodyParser.json());
-const PORT = 3000;
-const routeHandler = require("./path-to-your-code"); // Import the route handler
-app.post("/api/chat", routeHandler);
+app.use(express.json());
 
-// Mock Chat Context
-const initialChatContext = {
-  optedIn: false,
-  stage: null,
-  finished: false,
+// Mock GoogleGenerativeAI
+jest.mock("@google/generative-ai", () => {
+  return {
+    GoogleGenerativeAI: jest.fn().mockImplementation(() => {
+      return {
+        getGenerativeModel: jest.fn().mockReturnValue({
+          startChat: jest.fn().mockReturnValue({
+            sendMessage: jest.fn().mockResolvedValue({
+              response: { text: jest.fn().mockReturnValue("AI response") },
+            }),
+          }),
+        }),
+      };
+    }),
+  };
+});
+
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+const genAI = new GoogleGenerativeAI("fake-api-key");
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+const insuranceProducts = [
+  {
+    name: "Mechanical Breakdown Insurance (MBI)",
+    description: "Coverage for unexpected mechanical failures.",
+    rules: ["Not available to trucks or racing cars."],
+  },
+  {
+    name: "Comprehensive Car Insurance",
+    description: "Covers damages to your car and third-party vehicles.",
+    rules: ["Only available for vehicles less than 10 years old."],
+  },
+  {
+    name: "Third Party Car Insurance",
+    description: "Covers damages caused to third parties.",
+    rules: [],
+  },
+];
+
+let sessions = {};
+
+const initializeChat = () =>
+  model.startChat({
+    history: [
+      {
+        role: "user",
+        parts: [{ text: "Start the conversation." }],
+      },
+    ],
+  });
+
+app.post("/api/chat", async (req, res) => {
+  const { userMessage, sessionId } = req.body;
+
+  if (!userMessage || typeof userMessage !== "string") {
+    return res
+      .status(400)
+      .json({ botResponse: "Invalid input: Please provide a valid message." });
+  }
+
+  try {
+    let chatSession = sessions[sessionId];
+    if (!chatSession) {
+      chatSession = {
+        chat: initializeChat(),
+        userContext: {},
+      };
+      sessions[sessionId] = chatSession;
+
+      const intro = `
+        I’m Tina. I help you choose the right auto insurance policy. May I ask you a few questions to make sure I recommend the best policy for you? 
+        Please note that I do not need to know your location. 
+        Here are the available insurance products:
+        - Mechanical Breakdown Insurance (MBI): Coverage for unexpected mechanical failures. Not available to trucks or racing cars.
+        - Comprehensive Car Insurance: Covers damages to your car and third-party vehicles. Only available for vehicles less than 10 years old.
+        - Third Party Car Insurance: Covers damages caused to third parties.
+        Please use these products to make recommendations and ask questions one at a time. 
+        Try to ask at least three questions before offering an insurance product.
+        Do not use any special formatting like bold or italics in your responses.
+      `;
+      await chatSession.chat.sendMessage(intro);
+    }
+
+    const result = await chatSession.chat.sendMessage(userMessage.toString());
+    let botMessage = result.response.text();
+    botMessage = botMessage.replace(/[*_~`]/g, "");
+
+    const userContext = chatSession.userContext;
+
+    if (botMessage.includes("vehicle do you own")) {
+      userContext.vehicleType = userMessage.toLowerCase();
+    } else if (botMessage.includes("How old is your vehicle")) {
+      userContext.vehicleAge = parseInt(userMessage, 10);
+    }
+
+    if (userContext.vehicleType && userContext.vehicleAge !== undefined) {
+      const recommendations = getRecommendations(userContext);
+      const recommendationText = recommendations
+        .map((product) => `- ${product.name}: ${product.description}`)
+        .join("\n");
+
+      return res.json({
+        botResponse: `Based on your input, I recommend the following:\n${recommendationText}`,
+        sessionId,
+      });
+    }
+
+    res.json({ botResponse: botMessage, sessionId });
+  } catch (error) {
+    console.error("Error during chat:", error);
+    res.status(500).json({
+      botResponse: "I'm experiencing technical issues. Please try again later.",
+    });
+  }
+});
+
+const getRecommendations = (userContext) => {
+  const { vehicleType, vehicleAge } = userContext;
+  const recommendations = [];
+
+  if (vehicleType === "truck" || vehicleType === "racing car") {
+    return [
+      {
+        name: "Third Party Car Insurance",
+        description: "Covers damages caused to third parties.",
+      },
+    ];
+  }
+
+  if (vehicleAge !== undefined) {
+    if (vehicleAge < 10) {
+      recommendations.push(
+        insuranceProducts.find((p) => p.name === "Comprehensive Car Insurance")
+      );
+    }
+  }
+
+  recommendations.push(
+    insuranceProducts.find((p) => p.name === "Third Party Car Insurance")
+  );
+  return recommendations;
 };
 
-describe("Chat API Tests", () => {
-  beforeEach(() => {
-    global.chatContext = { ...initialChatContext };
-  });
+sessions = {};
 
-  test("1. Returns opt-in question when user starts chat", async () => {
-    const res = await request(app).post("/api/chat").send({ userMessage: "" });
+app.listen(PORT, () => {
+  console.log(`Server running on port http://localhost:${PORT}`);
+});
 
-    expect(res.status).toBe(200);
-    expect(res.body.botResponse).toContain(
-      "May I ask you a few personal questions"
-    );
-    expect(global.chatContext.stage).toBe("opt-in");
-  });
-
-  test("2. Returns error for missing userMessage", async () => {
-    const res = await request(app).post("/api/chat").send({});
-
-    expect(res.status).toBe(400);
-    expect(res.body.botResponse).toBe(
-      "Invalid request. Please provide a userMessage."
+describe("API Tests", () => {
+  it("should return 400 for invalid input", async () => {
+    const response = await request(app).post("/api/chat").send({});
+    expect(response.status).toBe(400);
+    expect(response.body.botResponse).toBe(
+      "Invalid input: Please provide a valid message."
     );
   });
 
-  test("3. Handles 'no' response during opt-in", async () => {
-    global.chatContext.stage = "opt-in";
-    const res = await request(app)
+  it("should initialize a new chat session", async () => {
+    const response = await request(app)
       .post("/api/chat")
-      .send({ userMessage: "no" });
+      .send({ userMessage: "Hello", sessionId: "123" });
+    expect(response.status).toBe(200);
+    expect(response.body.botResponse).toContain("I’m Tina");
+  });
 
-    expect(res.status).toBe(200);
-    expect(res.body.botResponse).toContain(
-      "No problem! Feel free to reach out"
+  it("should continue an existing chat session", async () => {
+    sessions["123"] = {
+      chat: initializeChat(),
+      userContext: {},
+    };
+    const response = await request(app)
+      .post("/api/chat")
+      .send({ userMessage: "Hello again", sessionId: "123" });
+    expect(response.status).toBe(200);
+    expect(response.body.botResponse).toBe("AI response");
+  });
+
+  it("should recommend insurance based on vehicle type and age", async () => {
+    sessions["123"] = {
+      chat: initializeChat(),
+      userContext: { vehicleType: "car", vehicleAge: 5 },
+    };
+    const response = await request(app)
+      .post("/api/chat")
+      .send({ userMessage: "My car is 5 years old", sessionId: "123" });
+    expect(response.status).toBe(200);
+    expect(response.body.botResponse).toContain(
+      "Based on your input, I recommend the following:"
     );
-    expect(global.chatContext.finished).toBe(true);
   });
 
-  test("4. Asks for vehicle type after opt-in approval", async () => {
-    global.chatContext.stage = "opt-in";
-    const res = await request(app)
+  it("should sanitize AI response", async () => {
+    const response = await request(app)
       .post("/api/chat")
-      .send({ userMessage: "yes" });
-
-    expect(res.status).toBe(200);
-    expect(res.body.botResponse).toContain("What type of vehicle do you own?");
-    expect(global.chatContext.stage).toBe("vehicle-type");
+      .send({ userMessage: "Hello", sessionId: "123" });
+    expect(response.status).toBe(200);
+    expect(response.body.botResponse).not.toContain("*");
+    expect(response.body.botResponse).not.toContain("_");
+    expect(response.body.botResponse).not.toContain("~");
+    expect(response.body.botResponse).not.toContain("`");
   });
 
-  test("5. Rejects invalid vehicle types for MBI", async () => {
-    global.chatContext.stage = "vehicle-type";
-    const res = await request(app)
+  it("should handle errors during chat", async () => {
+    model.startChat = jest.fn().mockImplementation(() => {
+      throw new Error("Test error");
+    });
+    const response = await request(app)
       .post("/api/chat")
-      .send({ userMessage: "truck" });
-
-    expect(res.status).toBe(200);
-    expect(res.body.botResponse).toContain(
-      "MBI is not available for trucks or racing cars"
+      .send({ userMessage: "Hello", sessionId: "123" });
+    expect(response.status).toBe(500);
+    expect(response.body.botResponse).toBe(
+      "I'm experiencing technical issues. Please try again later."
     );
-    expect(global.chatContext.finished).toBe(true);
   });
 
-  test("6. Asks for vehicle age for valid vehicle types", async () => {
-    global.chatContext.stage = "vehicle-type";
-    const res = await request(app)
-      .post("/api/chat")
-      .send({ userMessage: "car" });
-
-    expect(res.status).toBe(200);
-    expect(res.body.botResponse).toContain("How old is your vehicle?");
-    expect(global.chatContext.stage).toBe("vehicle-age");
-  });
-
-  test("7. Recommends policies based on vehicle age", async () => {
-    global.chatContext.stage = "vehicle-age";
-    const res = await request(app).post("/api/chat").send({ userMessage: "5" });
-
-    expect(res.status).toBe(200);
-    expect(res.body.botResponse).toContain("I recommend the following:");
-    expect(res.body.botResponse).toContain("Comprehensive Car Insurance");
-    expect(res.body.botResponse).toContain("Third Party Car Insurance");
-    expect(global.chatContext.finished).toBe(true);
+  it("should get recommendations based on vehicle type and age", () => {
+    const userContext = { vehicleType: "car", vehicleAge: 5 };
+    const recommendations = getRecommendations(userContext);
+    expect(recommendations).toEqual([
+      {
+        name: "Comprehensive Car Insurance",
+        description: "Covers damages to your car and third-party vehicles.",
+      },
+      {
+        name: "Third Party Car Insurance",
+        description: "Covers damages caused to third parties.",
+      },
+    ]);
   });
 });
