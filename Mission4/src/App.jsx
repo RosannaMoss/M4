@@ -1,3 +1,21 @@
+// import "./App.css";
+// import { useState } from "react";
+
+// // import { Routes, Route } from "react-router-dom";
+// import Header from "./components/Header";
+// import ChatApp from "./components/ChatBox";
+
+// function App() {
+//   return (
+//     <div>
+//       <Header></Header>
+//       <ChatApp></ChatApp>
+//     </div>
+//   );
+// }
+
+// export default App;
+
 import React from "react";
 import { useState } from "react";
 import Header from "./components/Header";

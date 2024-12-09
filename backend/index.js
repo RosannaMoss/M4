@@ -4,15 +4,19 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 const cors = require("cors");
 
 const app = express();
-const PORT = 3000; // Move this to dotenv in production
+const PORT = 3001;
 
 app.use(cors());
 app.use(bodyParser.json());
+app.use(express.json());
 
-const genAI = new GoogleGenerativeAI("AIzaSyBC16h2iWOSrNSRWgkezrOo6ayTwZuDH7s");
+// Initialize Google Generative AI
+const genAI = new GoogleGenerativeAI(
+  process.env.API_KEY || "AIzaSyCqQeVzjIUku7mJOYdddX3Xo1e422tUlyI"
+);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-// Insurance Products and Rules
+// Insurance products and rules
 const insuranceProducts = [
   {
     name: "Mechanical Breakdown Insurance (MBI)",
@@ -31,126 +35,109 @@ const insuranceProducts = [
   },
 ];
 
-// Helper: Generate AI Response
-// Helper: Generate AI Response
-async function generateAIResponse(prompt) {
-  try {
-    // Corrected payload structure
-    const response = await model.generateContent({
-      text: prompt, // Use 'text' instead of 'prompt' if required
-      temperature: 0.7,
-      candidateCount: 1, // Specify number of output candidates
-      maxOutputTokens: 200,
-    });
+// In-memory state to track user sessions
+const sessions = {};
 
-    // Log the raw response for debugging
-    console.log("AI API Response:", response);
+// Start a new chat session
+const initializeChat = () =>
+  model.startChat({
+    history: [
+      {
+        role: "user",
+        parts: [{ text: "Start the conversation." }],
+      },
+    ],
+  });
 
-    const output = response?.candidates?.[0]?.content; // Adjust field names as per SDK
-    if (!output) {
-      console.error("No output in AI response:", response);
-      return "Sorry, I couldn't generate a response.";
-    }
-    return output;
-  } catch (error) {
-    console.error("Error generating AI response:", error);
-    return "I’m experiencing technical issues. Please try again later.";
-  }
-}
-
-// Chat Flow Logic
-function getNextQuestion(userMessage, context) {
-  if (!context.optedIn) {
-    return {
-      botResponse:
-        "May I ask you a few personal questions to help recommend the best policy for you? (yes/no)",
-      context: { ...context, stage: "opt-in" },
-    };
-  }
-
-  if (context.stage === "opt-in") {
-    if (userMessage.toLowerCase() === "yes") {
-      return {
-        botResponse:
-          "What type of vehicle do you own? (e.g., car, truck, racing car)",
-        context: { ...context, optedIn: true, stage: "vehicle-type" },
-      };
-    }
-    return {
-      botResponse:
-        "No problem! Feel free to reach out if you change your mind.",
-      context: { ...context, optedIn: false, finished: true },
-    };
-  }
-
-  if (context.stage === "vehicle-type") {
-    const vehicleType = userMessage.toLowerCase();
-    if (["truck", "racing car"].includes(vehicleType)) {
-      return {
-        botResponse:
-          "Based on your input, Mechanical Breakdown Insurance (MBI) is not available for trucks or racing cars.",
-        context: { ...context, stage: "finished" },
-      };
-    }
-    return {
-      botResponse: "How old is your vehicle? (in years)",
-      context: { ...context, vehicleType, stage: "vehicle-age" },
-    };
-  }
-
-  if (context.stage === "vehicle-age") {
-    const vehicleAge = parseInt(userMessage, 10);
-    const recommendations = [];
-
-    if (vehicleAge < 10) recommendations.push(insuranceProducts[1]);
-    recommendations.push(insuranceProducts[2]);
-
-    return {
-      botResponse: `Based on your input, I recommend the following:\n${recommendations
-        .map((p) => `- ${p.name}: ${p.description}`)
-        .join("\n")}`,
-      context: { ...context, finished: true },
-    };
-  }
-
-  return {
-    botResponse: "Thank you for chatting with Tina!",
-    context: { ...context, finished: true },
-  };
-}
-
-// Chat Context
-let chatContext = { optedIn: false, stage: null, finished: false };
-
-// API Route
 app.post("/api/chat", async (req, res) => {
-  try {
-    const { userMessage } = req.body;
+  const { userMessage, sessionId } = req.body;
 
-    if (!userMessage) {
-      return res.status(400).json({
-        botResponse: "Invalid request. Please provide a userMessage.",
+  if (!userMessage || typeof userMessage !== "string") {
+    return res
+      .status(400)
+      .json({ botResponse: "Invalid input: Please provide a valid message." });
+  }
+
+  try {
+    // Initialize or continue the chat session
+    let chatSession = sessions[sessionId];
+    if (!chatSession) {
+      chatSession = {
+        chat: initializeChat(),
+        userContext: {},
+      };
+      sessions[sessionId] = chatSession;
+
+      const intro =
+        "I’m Tina. I help you choose the right auto insurance policy. May I ask you a few questions to make sure I recommend the best policy for you?";
+      await chatSession.chat.sendMessage(intro);
+    }
+
+    // Send the user message to the AI model
+    const result = await chatSession.chat.sendMessage(userMessage.toString());
+    const botMessage = result.response.text();
+    console.log("AI Response:", botMessage);
+
+    const userContext = chatSession.userContext;
+
+    // Track user's input and determine the next step
+    if (botMessage.includes("vehicle do you own")) {
+      userContext.vehicleType = userMessage.toLowerCase();
+    } else if (botMessage.includes("How old is your vehicle")) {
+      userContext.vehicleAge = parseInt(userMessage, 10);
+    }
+
+    // Check if the chat has enough context to recommend insurance
+    if (userContext.vehicleType && userContext.vehicleAge !== undefined) {
+      const recommendations = getRecommendations(userContext);
+      const recommendationText = recommendations
+        .map((product) => `- ${product.name}: ${product.description}`)
+        .join("\n");
+
+      return res.json({
+        botResponse: `Based on your input, I recommend the following:\n${recommendationText}`,
+        sessionId,
       });
     }
 
-    const { botResponse, context } = getNextQuestion(userMessage, chatContext);
-
-    if (!context.finished) {
-      const aiResponse = await generateAIResponse(botResponse);
-      chatContext = context; // Update context
-      return res.status(200).json({ botResponse: aiResponse });
-    } else {
-      return res.status(200).json({ botResponse });
-    }
+    // Respond with the next question
+    res.json({ botResponse: botMessage, sessionId });
   } catch (error) {
-    console.error("Backend error:", error);
+    console.error("Error during chat:", error);
     res.status(500).json({
-      botResponse: "An error occurred on the server. Please try again later.",
+      botResponse: "I'm experiencing technical issues. Please try again later.",
     });
   }
 });
 
-// Start Server
+// Helper function to determine recommendations
+const getRecommendations = (userContext) => {
+  const { vehicleType, vehicleAge } = userContext;
+  const recommendations = [];
+
+  if (vehicleType === "truck" || vehicleType === "racing car") {
+    return [
+      {
+        name: "Third Party Car Insurance",
+        description: "Covers damages caused to third parties.",
+      },
+    ];
+  }
+
+  if (vehicleAge !== undefined) {
+    if (vehicleAge < 10) {
+      recommendations.push(
+        insuranceProducts.find((p) => p.name === "Comprehensive Car Insurance")
+      );
+    }
+  }
+
+  recommendations.push(
+    insuranceProducts.find((p) => p.name === "Third Party Car Insurance")
+  );
+  return recommendations;
+};
+
 app.listen(PORT, () => {
   console.log(`Server running on port http://localhost:${PORT}`);
 });

@@ -15,7 +15,7 @@ const Header = ({ isDarkMode, toggleTheme }) => {
           <div className={styles.themeSwitchContainer}>
             <div className={styles.themeSwitchClouds} />
             <div className={styles.themeSwitchStarsContainer}>
-              {/* Stars SVG */}
+              {/* Updated Stars SVG */}
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 144 55"
@@ -24,7 +24,7 @@ const Header = ({ isDarkMode, toggleTheme }) => {
                 <path
                   fillRule="evenodd"
                   clipRule="evenodd"
-                  d="M135.831 3.00688C135.055 3.85027..."
+                  d="M20 10L25 25L10 15L30 15L15 25Z"
                   fill="currentColor"
                 />
               </svg>
@@ -43,6 +43,7 @@ const Header = ({ isDarkMode, toggleTheme }) => {
         <button className={styles.liveChatButton}>
           <div className={styles.svggWrapperOne}>
             <div className={styles.svgWrapper}>
+              {/* Button SVG */}
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
@@ -57,9 +58,8 @@ const Header = ({ isDarkMode, toggleTheme }) => {
               </svg>
             </div>
           </div>
-
           <span>Live Chat</span>
-        </button>{" "}
+        </button>
       </div>
     </header>
   );
