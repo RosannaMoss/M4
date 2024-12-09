@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import styles from "./ChatBox.module.css";
 
-const ChatApp = () => {
+const ChatApp = ({ isDarkMode }) => {
   const [messages, setMessages] = useState([
     {
       sender: "bot",
@@ -68,7 +68,11 @@ const ChatApp = () => {
   };
 
   return (
-    <div className={styles.chatContainer}>
+    <div
+      className={`${styles.chatContainer} ${
+        isDarkMode ? styles.darkMode : styles.lightMode
+      }`}
+    >
       <div className={styles.chatBox}>
         {messages.map((msg, index) => (
           <div
@@ -81,7 +85,7 @@ const ChatApp = () => {
           </div>
         ))}
       </div>
-      <div className={styles.inputContainer}>
+      <div className={styles.chatInputContainer}>
         <input
           type="text"
           className={styles.chatInput}

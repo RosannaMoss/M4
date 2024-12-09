@@ -36,7 +36,7 @@ const insuranceProducts = [
 ];
 
 // In-memory state to track user sessions
-const sessions = {};
+let sessions = {};
 
 // Start a new chat session
 const initializeChat = () =>
@@ -69,18 +69,41 @@ app.post("/api/chat", async (req, res) => {
       sessions[sessionId] = chatSession;
 
       const intro =
-        "I’m Tina. I help you choose the right auto insurance policy. May I ask you a few questions to make sure I recommend the best policy for you?";
+        /*
+      `
+        I’m Tina. I help you choose the right auto insurance policy. May I ask you a few questions to make sure I recommend the best policy for you? 
+        Please note that I do not need to know your location. 
+        Here are the available insurance products:
+        - Mechanical Breakdown Insurance (MBI): Coverage for unexpected mechanical failures. Not available to trucks or racing cars.
+        - Comprehensive Car Insurance: Covers damages to your car and third-party vehicles. Only available for vehicles less than 10 years old.
+        - Third Party Car Insurance: Covers damages caused to third parties.
+        Please use these products to make recommendations and ask questions one at a time and try to ask at least three questions before offering a insurance product.
+      `;
+      */
+        `I'm Tina I help you choose the right auto insurance policy. The current year is 2024.
+      Our available insurance products are ${insuranceProducts
+        .map((p) => p.name)
+        .join(", ")}. 
+      Please use these products to make recommendations and ask questions one at a time, observe the rules. 
+      Trucks and racing cars cannot get MBI. 
+      Only vehicles less than 10 years old can get Comprehensive Car Insurance.
+      Anyone can get Third Party Car Insurance.
+      Try to ask at least three questions before offering an insurance product.`;
+
       await chatSession.chat.sendMessage(intro);
     }
 
     // Send the user message to the AI model
     const result = await chatSession.chat.sendMessage(userMessage.toString());
-    const botMessage = result.response.text();
+    let botMessage = result.response.text();
     console.log("AI Response:", botMessage);
+
+    // Sanitize the AI response to remove any unwanted formatting
+    botMessage = botMessage.replace(/[*_~`]/g, "");
 
     const userContext = chatSession.userContext;
 
-    // Track user's input and determine the next step
+    // Track user's input and determine the next step (might not need)
     if (botMessage.includes("vehicle do you own")) {
       userContext.vehicleType = userMessage.toLowerCase();
     } else if (botMessage.includes("How old is your vehicle")) {
@@ -137,6 +160,9 @@ const getRecommendations = (userContext) => {
   );
   return recommendations;
 };
+
+// Clear sessions on server start
+sessions = {};
 
 app.listen(PORT, () => {
   console.log(`Server running on port http://localhost:${PORT}`);

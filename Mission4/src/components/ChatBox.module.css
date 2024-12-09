@@ -56,6 +56,31 @@
   font-size: 1rem;
 }
 
+.message {
+  display: inline-block;
+  padding: 10px 15px;
+  background-color: #f1f1f1;
+  color: #333;
+  border-radius: 15px;
+  border-bottom-left-radius: 0;
+  max-width: 60%;
+  word-wrap: break-word;
+}
+
+.bot {
+  align-self: flex-start;
+}
+
+.user {
+  align-self: flex-end;
+  background-color: #0078d4;
+  color: white;
+  border-radius: 15px;
+  border-bottom-right-radius: 0;
+  max-width: 60%;
+  word-wrap: break-word;
+}
+
 .chatSendButton {
   padding: 8px 20px;
   background-color: #0078d4;
