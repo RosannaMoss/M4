@@ -4,6 +4,7 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 const cors = require("cors");
 
 const app = express();
+// add dotenv
 const PORT = 3001;
 
 app.use(cors());
@@ -89,6 +90,7 @@ app.post("/api/chat", async (req, res) => {
       Only vehicles less than 10 years old can get Comprehensive Car Insurance.
       Anyone can get Third Party Car Insurance.
       Try to ask at least three questions before offering an insurance product.`;
+      // add temp? lower is more precise
 
       await chatSession.chat.sendMessage(intro);
     }
